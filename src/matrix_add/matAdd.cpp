@@ -130,6 +130,64 @@ matrixAddColShared (int nrow,
 }
 
 
+// Add each column with shared memory
+__global__
+void
+matrixAddRowShared (int nrow,
+                    int ncol,
+                    double* dA,
+                    double* dB,
+                    double* dC)
+{
+  // Global index owned by this thread
+  int grow = blockDim.y * blockIdx.y + threadIdx.y;
+  int gcol = blockDim.x * blockIdx.x + threadIdx.x;
+  
+  // Shared memory index inside the block
+  int srow = threadIdx.y;
+  int scol = threadIdx.x;
+
+  // Sum on each thread
+  double sum = 0.;
+  
+  // Loop over tiles
+  int ntilex = (ncol+TILEX-1)/TILEX;
+  for (int itilex(0); itilex<ntilex; ++itilex) {
+
+    // Shared memory over the block
+    __shared__ double shared_A[TILEY][TILEX];
+    __shared__ double shared_B[TILEY][TILEX];
+
+    // Local memory index
+    int lrow = grow;
+    int lcol = scol + itilex*TILEX;
+
+    // Populate shared memory matrix
+    if (grow < nrow && gcol < ncol) {
+      shared_A[srow][scol] = dA[ncol*lrow + lcol];
+      shared_B[srow][scol] = dB[ncol*lrow + lcol];
+    } else {
+      shared_A[srow][scol] = 0.;
+      shared_B[srow][scol] = 0.;
+    }
+
+    // Sync the threads
+    __syncthreads();
+
+    // Sum the tile
+    for (int icol(0); icol<TILEX; ++icol) {
+      sum += shared_A[srow][icol] + shared_B[srow][icol];
+    }
+    
+    // Sync the threads
+    __syncthreads();
+  }
+
+  // Set the value of C
+  dC[ncol*grow + gcol] = sum;
+}
+
+
 // Initialize host data
 // NOTE: Data is contiuous along col
 void
@@ -239,13 +297,23 @@ main ()
             << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
             << std::endl;
 
-  // Test column sum shared
+  // Test col sum shared
   cudaDeviceSynchronize();
   start = std::chrono::high_resolution_clock::now();
   matrixAddColShared<<<grid,block>>>(nrow, ncol, dA, dB, dC);
   cudaDeviceSynchronize();
   end = std::chrono::high_resolution_clock::now();
   std::cout << "Sum matrix col shared compute time (ms): "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+            << std::endl;
+  
+  // Test row sum shared
+  cudaDeviceSynchronize();
+  start = std::chrono::high_resolution_clock::now();
+  matrixAddRowShared<<<grid,block>>>(nrow, ncol, dA, dB, dC);
+  cudaDeviceSynchronize();
+  end = std::chrono::high_resolution_clock::now();
+  std::cout << "Sum matrix row shared compute time (ms): "
             << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
             << std::endl;
   
