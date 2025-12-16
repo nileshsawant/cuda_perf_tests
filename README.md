@@ -23,14 +23,14 @@ git clone https://github.com/AMLattanzi/cuda_perf_tests.git
 ### Running an example
 
 The code tree is given below where each subdirectory inside the **src** directory contains
-a particular test whose timings are documented in **README**.
+a particular test whose timings are documented in **README** and a shell file **make.sh** for
+compilation.
 ```
 cuda_perf_tests/
 ├── README.md
 └── src
-    └── matrix_add
-        ├── make.sh
-        └── README
+    ├── matrix_add
+    └── matrix_mult
 ```
 
 To compile and run a given example inside the src directory, one may execute the following commands:
