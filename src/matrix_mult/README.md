@@ -7,6 +7,6 @@ to load tiles of **A** and **B** and compute the dot product on each tile and th
 
 The following output is obtained on a single A100 GPU on the NERSC Perlmutter machine.
 ```
-Naive matrix multiplication compute time (ms): 5057
-Shared memory matrix multiplication compute time (ms): 5986
+Naive matrix multiplication compute time (ms): 261
+Shared memory matrix multiplication compute time (ms): 62
 ```
