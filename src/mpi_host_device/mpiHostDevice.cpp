@@ -1,3 +1,5 @@
+#include <chrono>
+#include <iostream>
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -94,6 +96,10 @@ main (int argc, char *argv[])
       h_data[idx] = static_cast<double>(idx);
     }
   }
+
+  // Barrier
+  MPI_Barrier(MPI_COMM_WORLD);
+  auto start = std::chrono::high_resolution_clock::now();
   
   // Rank 0 sends
   if (myRank == srcRank) {
@@ -118,6 +124,12 @@ main (int argc, char *argv[])
 
   // Barrier
   MPI_Barrier(MPI_COMM_WORLD);
+  auto end = std::chrono::high_resolution_clock::now();
+  if (myRank == destRank) {
+      std::cout << "CPU-CPU MPI transfer time (ms): "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+            << std::endl;
+  }
   //==============================================================
 
   
@@ -130,8 +142,11 @@ main (int argc, char *argv[])
     dim3 block(TILEX);
     dim3 grid((n+TILEX-1)/TILEX);
     initKernelIdx<<<grid,block,0,stream>>>(n, d_data);
-    cudaStreamSynchronize(stream);
   }
+
+  // Barrier
+  cudaDeviceSynchronize();
+  start = std::chrono::high_resolution_clock::now();
   
   // Rank 0 sends
   if (myRank == srcRank) {
@@ -158,6 +173,13 @@ main (int argc, char *argv[])
 
   // Barrier
   MPI_Barrier(MPI_COMM_WORLD);
+  cudaDeviceSynchronize();
+  end = std::chrono::high_resolution_clock::now();
+  if (myRank == destRank) {
+      std::cout << "GPU/CPU-CPU/GPU MPI transfer time (ms): "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+            << std::endl;
+  }
   //==============================================================
 
 
@@ -172,6 +194,10 @@ main (int argc, char *argv[])
     initKernelIdx<<<grid,block,0,stream>>>(n, d_data);
     cudaStreamSynchronize(stream);
   }
+
+  // Barrier
+  cudaDeviceSynchronize();
+  start = std::chrono::high_resolution_clock::now();
 
   // Rank 0 sends
   if (myRank == srcRank) {
@@ -197,6 +223,13 @@ main (int argc, char *argv[])
 
   // Barrier
   MPI_Barrier(MPI_COMM_WORLD);
+  cudaDeviceSynchronize();
+  end = std::chrono::high_resolution_clock::now();
+  if (myRank == destRank) {
+      std::cout << "GPU-GPU MPI transfer time (ms): "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+            << std::endl;
+  }
   //==============================================================
 
   
