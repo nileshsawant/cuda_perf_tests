@@ -8,6 +8,7 @@
 #define TILEY 32
 #define TILEX 32
 
+
 // Matrix multiplication kernel
 // Layout: matrix(row,col)
 __global__
@@ -18,6 +19,31 @@ matrixMult (int nrow,
             double* dB,
             double* dC)
 {
+  // NOT coalesced when accessing dC!
+  int row = blockDim.x * blockIdx.x + threadIdx.x;
+  int col = blockDim.y * blockIdx.y + threadIdx.y;
+
+  if (row < nrow && col < ncol) {
+    double sum = 0.;
+    for (int k(0); k<nrow; ++k) {
+      sum += dA[row*ncol + k] + dB[k*ncol + col];
+    }
+    dC[row*ncol + col] = sum;
+  }
+}
+
+
+// Coalesced matrix multiplication kernel
+// Layout: matrix(row,col)
+__global__
+void
+matrixMultCoalesced (int nrow,
+                     int ncol,
+                     double* dA,
+                     double* dB,
+                     double* dC)
+{
+  // IS coalesced when accessing dC!
   int row = blockDim.y * blockIdx.y + threadIdx.y;
   int col = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -93,6 +119,7 @@ matrixMultShared (int nrow,
 }
 
 
+// Confirm solution matches naive
 __global__
 void
 verifySolutions(int* derr,
@@ -109,6 +136,8 @@ verifySolutions(int* derr,
   }
   atomicAdd(derr, val);
 }
+
+
 // Initialize host data
 // NOTE: Data is contiuous along col
 void
@@ -165,6 +194,8 @@ main ()
   cudaMemcpy(dA, hA, m_size, cudaMemcpyHostToDevice);
   cudaMemcpy(dB, hB, m_size, cudaMemcpyHostToDevice);
 
+  // Test naive implementation
+  //========================================================
   // Start timer
   auto start = std::chrono::high_resolution_clock::now();
   
@@ -181,8 +212,35 @@ main ()
   std::cout << "Naive matrix multiplication compute time (ms): "
             << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
             << std::endl;
+  //========================================================
+
+  
+  // Test coalesced version
+  //========================================================
+  cudaDeviceSynchronize();
+  start = std::chrono::high_resolution_clock::now();
+  matrixMultCoalesced<<<grid,block>>>(nrow, ncol, dA, dB, dCs);
+  cudaDeviceSynchronize();
+  end = std::chrono::high_resolution_clock::now();
+  std::cout << "Coalesced memory matrix multiplication compute time (ms): "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+            << std::endl;
+
+  // Confirm the methods give the same answer
+  verifySolutions<<<grid,block>>>(derr, nrow, ncol, dC, dCs);
+  cudaMemcpy(&herr, derr, sizeof(int), cudaMemcpyDeviceToHost);
+  if (herr>0) {
+    std::cout << "Number of differences detected: " << herr << "\n";
+  }
+
+  // Clean up
+  cudaMemset(dCs, 0., m_size);
+  cudaMemset(derr, 0, sizeof(int));
+  //========================================================
+
   
   // Test shared memory version
+  //========================================================
   cudaDeviceSynchronize();
   start = std::chrono::high_resolution_clock::now();
   matrixMultShared<<<grid,block>>>(nrow, ncol, dA, dB, dCs);
@@ -198,6 +256,7 @@ main ()
   if (herr>0) {
     std::cout << "Number of differences detected: " << herr << "\n";
   }
+  //========================================================
   
   // Clean up memory
   free(hA);
