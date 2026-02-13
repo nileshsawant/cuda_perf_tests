@@ -12,11 +12,18 @@ GPU/CPU-CPU/GPU MPI transfer time (us): 7254
 GPU-GPU MPI transfer time (us): 278
 ```
 
-The following output is obtained on 2 CPU ranks with 2 H100 GPUs on the NREL Kestrel machine.
+The following output is obtained on 2 CPU ranks with 2 H100 GPUs on the NREL Kestrel machine using nvcc with GTL:
 ```
 CPU-CPU MPI transfer time (us): 72
 GPU/CPU-CPU/GPU MPI transfer time (us): 4119
 GPU-GPU MPI transfer time (us): 859
+```
+
+The following output is obtained on 2 CPU ranks with 2 H100 GPUs on the NREL Kestrel machine using PrgEnv-nvhpc:
+```
+CPU-CPU MPI transfer time (us): 84
+GPU/CPU-CPU/GPU MPI transfer time (us): 4295
+GPU-GPU MPI transfer time (us): 912
 ```
 
 ## Building on NREL Kestrel
@@ -30,11 +37,11 @@ source make.sh
 source run.sh
 ```
 
-### Method 2: PrgEnv-nvhpc (make_nvhpc.sh) - Recommended
+### Method 2: PrgEnv-nvhpc (make_nvhpc.sh)
 Uses Cray's `PrgEnv-nvhpc` with NVIDIA compilers. GPU-aware MPI is handled automatically by the Cray wrappers. Based on [Kestrel GPU documentation](https://natlabrockies.github.io/HPC/Documentation/Systems/Kestrel/Environments/gpubuildandrun/#mpicudaaware).
 ```bash
 source make_nvhpc.sh
 source run_nvhpc.sh
 ```
 
-Both methods deliver similar performance (~912 μs for GPU-GPU transfers across nodes).
+Both methods deliver similar performance.
