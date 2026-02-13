@@ -126,8 +126,8 @@ main (int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD);
   auto end = std::chrono::high_resolution_clock::now();
   if (myRank == destRank) {
-      std::cout << "CPU-CPU MPI transfer time (ms): "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+      std::cout << "CPU-CPU MPI transfer time (us): "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
             << std::endl;
   }
   //==============================================================
@@ -176,8 +176,8 @@ main (int argc, char *argv[])
   cudaDeviceSynchronize();
   end = std::chrono::high_resolution_clock::now();
   if (myRank == destRank) {
-      std::cout << "GPU/CPU-CPU/GPU MPI transfer time (ms): "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+      std::cout << "GPU/CPU-CPU/GPU MPI transfer time (us): "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
             << std::endl;
   }
   //==============================================================
@@ -226,8 +226,8 @@ main (int argc, char *argv[])
   cudaDeviceSynchronize();
   end = std::chrono::high_resolution_clock::now();
   if (myRank == destRank) {
-      std::cout << "GPU-GPU MPI transfer time (ms): "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+      std::cout << "GPU-GPU MPI transfer time (us): "
+            << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()
             << std::endl;
   }
   //==============================================================

@@ -11,3 +11,10 @@ CPU-CPU MPI transfer time (us): 74
 GPU/CPU-CPU/GPU MPI transfer time (us): 7254
 GPU-GPU MPI transfer time (us): 278
 ```
+
+The following output is obtained on 2 CPU ranks with 2 H100 GPUs on the NREL Kestrel machine.
+```
+CPU-CPU MPI transfer time (us): 72
+GPU/CPU-CPU/GPU MPI transfer time (us): 4119
+GPU-GPU MPI transfer time (us): 859
+```
