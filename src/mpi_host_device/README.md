@@ -18,3 +18,23 @@ CPU-CPU MPI transfer time (us): 72
 GPU/CPU-CPU/GPU MPI transfer time (us): 4119
 GPU-GPU MPI transfer time (us): 859
 ```
+
+## Building on NREL Kestrel
+
+Two build approaches are provided for Kestrel's H100 GPU nodes:
+
+### Method 1: nvcc with GTL (make.sh)
+Uses nvcc directly with Cray MPICH and manually links the GTL library for GPU-aware MPI support.
+```bash
+source make.sh
+source run.sh
+```
+
+### Method 2: PrgEnv-nvhpc (make_nvhpc.sh) - Recommended
+Uses Cray's `PrgEnv-nvhpc` with NVIDIA compilers. GPU-aware MPI is handled automatically by the Cray wrappers. Based on [Kestrel GPU documentation](https://natlabrockies.github.io/HPC/Documentation/Systems/Kestrel/Environments/gpubuildandrun/#mpicudaaware).
+```bash
+source make_nvhpc.sh
+source run_nvhpc.sh
+```
+
+Both methods deliver similar performance (~912 μs for GPU-GPU transfers across nodes).
